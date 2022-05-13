@@ -1,0 +1,8 @@
+- hosts: elk
+  # remote_user:
+  become: yes
+  become_user: root
+  roles:
+    - { role: elasticsearch }
+    - { role: kibana }
+    - { role: logstash }

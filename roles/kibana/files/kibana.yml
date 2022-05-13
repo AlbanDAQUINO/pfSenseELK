@@ -1,0 +1,3 @@
+server.publicBaseUrl: "http://groupe4.ais1-bordeaux.fr"
+server.host: 192.168.144.100
+server.port: 5601

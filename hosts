@@ -1,0 +1,7 @@
+[elk:vars]
+ansible_connection = ssh
+ansible_port       = 22716
+ansible_user       = alban
+
+[elk]
+groupe4-elk  ansible_host=212.83.172.112

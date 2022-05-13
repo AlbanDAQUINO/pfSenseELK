@@ -1,0 +1,78 @@
+---
+
+- name: Install apt-transport-https to support https APT downloads
+  apt: name=apt-transport-https state=present
+
+- name: Add Elasticsearch repository key
+  apt_key: url="{{ es_apt_key }}" state=present
+
+- name: Add elasticsearch repository
+  apt_repository: repo={{ es_apt_url }} state=present
+
+- name: Install logstash
+  apt: 
+    name: logstash 
+    state: present
+
+- name: Create Required Directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - '/etc/logstash/conf.d'
+    - '/etc/logstash/conf.d/databases'
+    - '/etc/logstash/conf.d/patterns'
+
+- name: Directories Permissions
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+    - '/etc/logstash/conf.d'
+    - '/etc/logstash/conf.d/databases'
+    - '/etc/logstash/conf.d/patterns'
+
+- name: Copy pfELK Files
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+    - { src: 'databases/rule-names.csv',                    dest: '/etc/logstash/conf.d/databases/' }
+    - { src: 'databases/service-names-port-numbers.csv',    dest: '/etc/logstash/conf.d/databases/' }
+    - { src: 'databases/private-hostnames.csv',             dest: '/etc/logstash/conf.d/databases/' }
+    - { src: 'patterns/pfelk.grok',                         dest: '/etc/logstash/conf.d/patterns/' }
+    - { src: 'patterns/openvpn.grok',                       dest: '/etc/logstash/conf.d/patterns/' }
+    - { src: '01-inputs.conf',                              dest: '/etc/logstash/conf.d/' }
+    - { src: '05-apps.conf',                                dest: '/etc/logstash/conf.d/' }
+    - { src: '20-interfaces.conf',                          dest: '/etc/logstash/conf.d/' }
+    - { src: '30-geoip.conf',                               dest: '/etc/logstash/conf.d/' }
+    - { src: '35-rules-desc.conf',                          dest: '/etc/logstash/conf.d/' }
+    - { src: '36-ports-desc.conf',                          dest: '/etc/logstash/conf.d/' }
+    - { src: '37-enhanced_user_agent.conf',                 dest: '/etc/logstash/conf.d/' }    
+    - { src: '38-enhanced_url.conf',                        dest: '/etc/logstash/conf.d/' }
+    - { src: '45-cleanup.conf',                             dest: '/etc/logstash/conf.d/' }
+    - { src: '49-enhanced_private.conf',                    dest: '/etc/logstash/conf.d/' }
+    - { src: '50-outputs.conf',                             dest: '/etc/logstash/conf.d/' }
+
+- name: Copy logstash configuration
+  copy:
+    src: "files/pipelines.yml"
+    dest: "/etc/logstash/pipelines.yml"
+    owner: root
+    group: root
+    mode: 0755
+
+- name: reload systemd
+  become: yes
+  command: systemctl daemon-reload
+
+- name: Ensure Logstash is started and enabled on boot.
+  service:
+    name: logstash
+    state: started
+    enabled: yes
